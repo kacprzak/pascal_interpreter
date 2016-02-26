@@ -49,36 +49,27 @@ class Lexer
   
   def get_next_token
     while @current_char
-      if @current_char =~/\s/
+      case @current_char
+      when /\s/
         skip_whitespace
         next
-      end
-
-      if @current_char =~ /[[:digit:]]/
+      when /[[:digit:]]/
         return Token.new(:integer, integer)
-      end
-
-      if @current_char == '+'
+      when '+'
         advance
         return Token.new(:plus, '+')
-      end
-
-      if @current_char == '-'
+      when '-'
         advance
         return Token.new(:minus, '-')
-      end
-
-      if @current_char == '*'
+      when '*'
         advance
         return Token.new(:mul, '*')
-      end
-
-      if @current_char == '/'
+      when '/'
         advance
         return Token.new(:div, '/')
+      else
+        error
       end
-
-      error
     end
     Token.new(:eof, nil)
   end
