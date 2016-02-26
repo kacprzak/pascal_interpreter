@@ -68,6 +68,16 @@ class Lexer
         return Token.new(:minus, '-')
       end
 
+      if @current_char == '*'
+        advance
+        return Token.new(:mul, '*')
+      end
+
+      if @current_char == '/'
+        advance
+        return Token.new(:div, '/')
+      end
+
       error
     end
     Token.new(:eof, nil)
@@ -78,7 +88,7 @@ end
 class Interpreter
   def initialize(lexer)
     @lexer = lexer
-    @current_token = nil
+    @current_token = @lexer.get_next_token
   end
 
   def error
@@ -94,17 +104,32 @@ class Interpreter
   end
 
   # return an integer token value
-  def term
+  def factor
     token = @current_token
     eat :integer
     token.value
   end
   
-  # expr -> integer + integer
-  # expr -> integer - integer
-  def expr
-    @current_token = @lexer.get_next_token
+  # expr -> factor * factor
+  # expr -> factor / factor
+  def term
+    result = factor
+    while [:mul, :div].include? @current_token.type
+      token = @current_token
+      if token.type == :mul
+        eat :mul
+        result = result * factor
+      elsif token.type == :div
+        eat :div
+        result = result / factor
+      end
+    end
+    result
+  end
 
+  # expr -> term + term
+  # expr -> term - term
+  def expr
     result = term
     while [:plus, :minus].include? @current_token.type
       token = @current_token
@@ -119,6 +144,7 @@ class Interpreter
     result
   end
 end
+
 
 def main
   loop do
