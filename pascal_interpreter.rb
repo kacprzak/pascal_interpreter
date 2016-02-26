@@ -68,7 +68,7 @@ class Interpreter
         return Token.new(:minus, '-')
       end
 
-      error "Wrong char: #{current_char}"
+      error "Wrong char: #{@current_char}"
     end
     Token.new(:eof, nil)
   end
