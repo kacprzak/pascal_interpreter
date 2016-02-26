@@ -1,3 +1,4 @@
+#!/usr/bin/ruby
 class Token
   attr_accessor :type, :value
   
@@ -16,30 +17,62 @@ class Interpreter
     @text = text
     @pos = 0
     @current_token = nil
+    @current_char = @text[@pos]
   end
 
   def error(msg)
     raise "Error parsing input(#{@pos}). #{msg}"
   end
-  
-  def get_next_token
-    return Token.new(:eof, nil) if @pos >= @text.length
 
-    current_char = @text[@pos]
-
-    if current_char =~ /[[:digit:]]/
-      @pos += 1
-      return Token.new(:integer, current_char.to_i)
+  def advance
+    @pos += 1
+    if @pos > @text.length - 1
+      @current_char = nil
+    else
+      @current_char = @text[@pos]
     end
-
-    if current_char == '+'
-      @pos += 1
-      return Token.new(:plus, current_char)
-    end
-
-    error "Wrong char: #{current_char}"
   end
 
+  def skip_whitespace
+    advance while @current_char and @current_char =~ /\s/
+  end
+
+  # Consume integer
+  def integer
+    result = ''
+    while @current_char and @current_char =~ /[[:digit:]]/
+      result << @current_char
+      advance
+    end
+    result.to_i
+  end
+  
+  def get_next_token
+    while @current_char
+      if @current_char =~/\s/
+        skip_whitespace
+        next
+      end
+
+      if @current_char =~ /[[:digit:]]/
+        return Token.new(:integer, integer)
+      end
+
+      if @current_char == '+'
+        advance
+        return Token.new(:plus, '+')
+      end
+
+      if @current_char == '-'
+        advance
+        return Token.new(:minus, '-')
+      end
+
+      error "Wrong char: #{current_char}"
+    end
+    Token.new(:eof, nil)
+  end
+  
   def eat(token_type)
     if @current_token.type == token_type
       @current_token = get_next_token
@@ -49,6 +82,7 @@ class Interpreter
   end
 
   # expr -> integer + integer
+  # expr -> integer - integer
   def expr
     @current_token = get_next_token
 
@@ -56,12 +90,20 @@ class Interpreter
     eat(:integer)
 
     op = @current_token
-    eat(:plus)
-
+    if op.type == :plus
+      eat(:plus)
+    else
+      eat(:minus)
+    end
+    
     right = @current_token
     eat(:integer)
 
-    left.value + right.value
+    if op.type == :plus
+      left.value + right.value
+    else
+      left.value - right.value
+    end
   end
 end
 
@@ -70,7 +112,7 @@ def main
     print 'calc> '
     $stdout.flush
     text = gets.chomp
-    break if text.empty?
+    next if text.empty?
     interpreter = Interpreter.new(text)
     puts interpreter.expr
   end
