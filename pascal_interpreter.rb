@@ -77,33 +77,34 @@ class Interpreter
     if @current_token.type == token_type
       @current_token = get_next_token
     else
-      error "Wrong token: #{token_type}"
+      error 'Invalid syntax'
     end
   end
 
+  # return an integer token value
+  def term
+    token = @current_token
+    eat :integer
+    token.value
+  end
+  
   # expr -> integer + integer
   # expr -> integer - integer
   def expr
     @current_token = get_next_token
 
-    left = @current_token
-    eat(:integer)
-
-    op = @current_token
-    if op.type == :plus
-      eat(:plus)
-    else
-      eat(:minus)
+    result = term
+    while [:plus, :minus].include? @current_token.type
+      token = @current_token
+      if token.type == :plus
+        eat :plus
+        result = result + term
+      elsif token.type == :minus
+        eat :minus
+        result = result - term
+      end
     end
-    
-    right = @current_token
-    eat(:integer)
-
-    if op.type == :plus
-      left.value + right.value
-    else
-      left.value - right.value
-    end
+    result
   end
 end
 
