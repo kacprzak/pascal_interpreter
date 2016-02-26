@@ -12,16 +12,16 @@ class Token
   end
 end
 
-class Interpreter
+
+class Lexer
   def initialize(text)
     @text = text
     @pos = 0
-    @current_token = nil
     @current_char = @text[@pos]
   end
 
-  def error(msg)
-    raise "Error parsing input(#{@pos}). #{msg}"
+  def error
+    raise  "Wrong char: #{@current_char}"
   end
 
   def advance
@@ -68,16 +68,28 @@ class Interpreter
         return Token.new(:minus, '-')
       end
 
-      error "Wrong char: #{@current_char}"
+      error
     end
     Token.new(:eof, nil)
+  end
+end
+
+
+class Interpreter
+  def initialize(lexer)
+    @lexer = lexer
+    @current_token = nil
+  end
+
+  def error
+    raise 'Invalid syntax'
   end
   
   def eat(token_type)
     if @current_token.type == token_type
-      @current_token = get_next_token
+      @current_token = @lexer.get_next_token
     else
-      error 'Invalid syntax'
+      error
     end
   end
 
@@ -91,7 +103,7 @@ class Interpreter
   # expr -> integer + integer
   # expr -> integer - integer
   def expr
-    @current_token = get_next_token
+    @current_token = @lexer.get_next_token
 
     result = term
     while [:plus, :minus].include? @current_token.type
@@ -114,7 +126,8 @@ def main
     $stdout.flush
     text = gets.chomp
     next if text.empty?
-    interpreter = Interpreter.new(text)
+    lexer = Lexer.new(text)
+    interpreter = Interpreter.new(lexer)
     puts interpreter.expr
   end
 end
