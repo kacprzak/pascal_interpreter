@@ -68,6 +68,12 @@ class Lexer
       when '/'
         advance
         return Token.new(:div, '/')
+      when '('
+        advance
+        return Token.new(:lparen, '(')
+      when ')'
+        advance
+        return Token.new(:rparen, ')')
       else
         error
       end

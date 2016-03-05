@@ -1,12 +1,46 @@
 #!/usr/bin/ruby
 require_relative 'lexer'
 
-class Interpreter
+class AST
+end
+
+
+class BinOp < AST
+  attr_reader :left, :token, :right
+  alias_method :op, :token
+
+  def initialize(left, token, right)
+    @left = left
+    @token = token
+    @right = right
+  end
+end
+
+
+class Num < AST
+  attr_reader :token
+  
+  def initialize(token)
+    @token = token
+  end
+
+  def value
+    @token.value
+  end
+end
+
+
+class Parser
   def initialize(lexer)
     @lexer = lexer
     @current_token = @lexer.get_next_token
   end
 
+  def parse
+    expr
+  end
+  
+  private
   def error
     raise 'Invalid syntax'
   end
@@ -19,15 +53,21 @@ class Interpreter
     end
   end
 
-  # return an integer token value
+  # factor : INTEGER | LPAREN expr RPAREN
   def factor
     token = @current_token
-    eat :integer
-    token.value
+    if token.type == :integer
+      eat :integer
+      token.value
+    elsif token.type == :lparen
+      eat(:lparen)
+      result = expr
+      eat(:rparen)
+      result
+    end
   end
   
-  # expr -> factor * factor
-  # expr -> factor / factor
+  # term: factor ((MUL | DIV) factor)*
   def term
     result = factor
     while [:mul, :div].include? @current_token.type
@@ -43,8 +83,7 @@ class Interpreter
     result
   end
 
-  # expr -> term + term
-  # expr -> term - term
+  # expr: term ((PLUS | MINUS) term)*
   def expr
     result = term
     while [:plus, :minus].include? @current_token.type
@@ -69,8 +108,8 @@ def main
     text = gets.chomp
     next if text.empty?
     lexer = Lexer.new(text)
-    interpreter = Interpreter.new(lexer)
-    puts interpreter.expr
+    interpreter = Parser.new(lexer)
+    puts interpreter.parse
   end
 end
 
