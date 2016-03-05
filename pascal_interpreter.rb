@@ -1,13 +1,6 @@
 #!/usr/bin/ruby
 require_relative 'parser'
-
-class NodeVisitor
-  def visit(node)
-    method_name = "visit_#{node.class.name}"
-    send(method_name, node)
-  end
-end
-
+require_relative 'node_visitor'
 
 class Interpreter < NodeVisitor
   def initialize(parser)
