@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 class Token
-  attr_accessor :type, :value
+  attr_reader :type, :value
   
   def initialize(type, value)
     @type = type
@@ -20,6 +20,7 @@ class Lexer
     @current_char = @text[@pos]
   end
 
+  private
   def error
     raise  "Wrong char: #{@current_char}"
   end
@@ -46,7 +47,8 @@ class Lexer
     end
     result.to_i
   end
-  
+
+  public
   def get_next_token
     while @current_char
       case @current_char
