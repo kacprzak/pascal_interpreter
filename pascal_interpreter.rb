@@ -31,7 +31,7 @@ class Interpreter < NodeVisitor
 end
 
 
-def main
+def interactive_interpreter
   loop do
     print 'calc> '
     $stdout.flush
@@ -41,7 +41,15 @@ def main
     parser = Parser.new(lexer)
     interpreter = Interpreter.new(parser)
     puts interpreter.interpret
-  end
+  end  
+end
+
+def main
+  if ARGV.length == 0
+    interactive_interpreter
+  else
+    puts Interpreter.new(Parser.new(Lexer.new(ARGV[0]))).interpret
+  end  
 end
 
 if __FILE__ == $0
