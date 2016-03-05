@@ -16,6 +16,17 @@ class BinOp < AST
 end
 
 
+class UnaryOp < AST
+  attr_reader :token, :child
+  alias_method :op, :token
+
+  def initialize(token, child)
+    @token = token
+    @child = child
+  end
+end
+
+
 class Num < AST
   attr_reader :token
   
@@ -52,10 +63,16 @@ class Parser
     end
   end
 
-  # factor : INTEGER | LPAREN expr RPAREN
+  # factor : (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN
   def factor
     token = @current_token
-    if token.type == :integer
+    if token.type == :plus
+      eat :plus
+      UnaryOp.new(token, factor)
+    elsif token.type == :minus
+      eat :minus
+      UnaryOp.new(token, factor)
+    elsif token.type == :integer
       eat :integer
       Num.new(token)
     elsif token.type == :lparen

@@ -17,6 +17,15 @@ class Interpreter < NodeVisitor
     right_value = visit(node.right)
     left_value.public_send(node.op.value, right_value)
   end
+
+  def visit_UnaryOp(node)
+    op = node.op.type
+    if op == :plus
+      +visit(node.child)
+    elsif op == :minus
+      -visit(node.child)
+    end
+  end
   
   def visit_Num(node)
     node.value

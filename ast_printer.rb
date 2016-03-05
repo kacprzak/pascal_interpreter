@@ -4,6 +4,7 @@ require_relative 'parser'
 require_relative 'node_visitor'
 
 class ASTPrinter < NodeVisitor
+  SPACE = ' '
   VERTICAL = '│'
   HORIZONTAL = '─'
   VERTICAL_AND_RIGHT = '├'
@@ -19,29 +20,36 @@ class ASTPrinter < NodeVisitor
   end
 
   private
-  def increase_indent(text)
-    @indent += text
+  def increase_indent(last_char)
+    @indent += SPACE + SPACE + last_char
   end
 
-  def decrease_indent(num_of_chars)
-    @indent = @indent[0...-num_of_chars]
+  def decrease_indent
+    @indent = @indent[0...-3]
   end
 
   def puts_node(node_value)
     puts @indent + HORIZONTAL + "(" + node_value + ")"
 
     @indent[-1,1] = VERTICAL if @indent[-1,1] == VERTICAL_AND_RIGHT
-    @indent[-1,1] = " " if @indent[-1,1] == UP_AND_RIGHT
+    @indent[-1,1] = SPACE if @indent[-1,1] == UP_AND_RIGHT
   end
 
   def visit_BinOp(node)
     puts_node node.op.value
-    increase_indent("  " + VERTICAL_AND_RIGHT)
+    increase_indent VERTICAL_AND_RIGHT
     visit(node.left)
-    decrease_indent 3
-    increase_indent("  " + UP_AND_RIGHT)
+    decrease_indent
+    increase_indent UP_AND_RIGHT
     visit(node.right)
-    decrease_indent 3
+    decrease_indent
+  end
+
+  def visit_UnaryOp(node)
+    puts_node node.op.value
+    increase_indent UP_AND_RIGHT
+    visit(node.child)
+    decrease_indent
   end
   
   def visit_Num(node)
