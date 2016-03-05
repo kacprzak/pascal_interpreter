@@ -1,5 +1,5 @@
 #!/usr/bin/ruby
-require './lexer'
+require_relative 'lexer'
 
 class Interpreter
   def initialize(lexer)
