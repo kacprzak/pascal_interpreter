@@ -1,11 +1,11 @@
 BEGIN
 
 BEGIN
-   number := 2;
-   a := NumBer;
-   B := 10 * a + 10 * NUMBER / 4;
-   c := a - - b
+   _number := 2;
+   a := _NumBer;
+   B := 10 * a + 10 * _NUMBER / 4;
+   c_ := a - - b
 end;
 
-x := 11;
+x_2 := 11;
 END.

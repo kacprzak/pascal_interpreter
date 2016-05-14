@@ -61,7 +61,7 @@ class Lexer
 
   def id
     result = ''
-    while @current_char and @current_char =~ /[[:alnum:]]/
+    while @current_char and @current_char =~ /_|[[:alnum:]]/
       result << @current_char
       advance
     end
@@ -75,7 +75,7 @@ class Lexer
       when /\s/
         skip_whitespace
         next
-      when /[[:alpha:]]/
+      when /_|[[:alpha:]]/
         return id
       when /[[:digit:]]/
         return Token.new(:integer, integer)
