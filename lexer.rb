@@ -13,6 +13,9 @@ end
 
 
 class Lexer
+  RESERVED_KEYWORDS = {'BEGIN' => Token.new(:begin, 'BEGIN'),
+                       'END' => Token.new(:end, 'END') }
+
   def initialize(text)
     @text = text
     @pos = 0
@@ -24,6 +27,15 @@ class Lexer
     raise  "Wrong char: #{@current_char}"
   end
 
+  def peek
+    peek_pos = @pos + 1
+    if peek_pos > @text.length - 1
+      nil
+    else
+      @text[peek_pos]
+    end
+  end
+  
   def advance
     @pos += 1
     if @pos > @text.length - 1
@@ -32,7 +44,7 @@ class Lexer
       @current_char = @text[@pos]
     end
   end
-
+  
   def skip_whitespace
     advance while @current_char and @current_char =~ /\s/
   end
@@ -47,6 +59,15 @@ class Lexer
     result.to_i
   end
 
+  def id
+    result = ''
+    while @current_char and @current_char =~ /[[:alnum:]]/
+      result << @current_char
+      advance
+    end
+    RESERVED_KEYWORDS.fetch(result, Token.new(:id, result))
+  end
+
   public
   def get_next_token
     while @current_char
@@ -54,8 +75,22 @@ class Lexer
       when /\s/
         skip_whitespace
         next
+      when /[[:alpha:]]/
+        return id
       when /[[:digit:]]/
         return Token.new(:integer, integer)
+      when ':'
+        if peek == '='
+          advance
+          advance
+          return Token.new(:assign, ':=')
+        end
+      when ';'
+        advance
+        return Token.new(:semi, ';')
+      when '.'
+        advance
+        return Token.new(:dot, '.')
       when '+'
         advance
         return Token.new(:plus, '+')

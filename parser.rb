@@ -40,6 +40,44 @@ class Num < AST
 end
 
 
+class Compound < AST
+  attr_accessor :children
+  
+  def initialize
+    @children = []
+  end
+end
+
+
+class Assign < AST
+  attr_reader :left, :token, :right
+  alias_method :op, :token
+
+  def initialize(left, token, right)
+    @left = left
+    @token = token
+    @right = right
+  end
+end
+
+
+class Var < AST
+  attr_reader :token
+
+  def initialize(token)
+    @token = token
+  end
+
+  def value
+    @token.value
+  end
+end
+
+
+class NoOp < AST
+end
+
+
 class Parser
   def initialize(lexer)
     @lexer = lexer
@@ -47,7 +85,9 @@ class Parser
   end
 
   def parse
-    expr
+    node = program
+    error if @current_token.type != :eof
+    node
   end
   
   private
@@ -63,7 +103,68 @@ class Parser
     end
   end
 
-  # factor : (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN
+  # program: compound_statement DOT
+  def program
+    node = compound_statement
+    eat(:dot)
+    node
+  end
+
+  # compound_statement: BEGIN statement_list END
+  def compound_statement
+    eat(:begin)
+    nodes = statement_list
+    eat(:end)
+    root = Compound.new
+    root.children = nodes
+    root
+  end
+
+  # statement_list: statement | statement SEMI statement_list
+  def statement_list
+    results = [statement]
+    results
+    while @current_token.type == :semi
+      eat(:semi)
+      results << statement
+    end
+    error if @current_token.type == :id
+    results
+  end
+
+  # statement: compound_statement | assignment_statement | empty
+  def statement
+    if @current_token.type == :begin
+      compound_statement
+    elsif @current_token.type == :id
+      assignment_statement
+    else
+      empty
+    end
+  end
+
+  # assignment_statement: variable ASSIGN expr
+  def assignment_statement
+    left = variable
+    token = @current_token
+    eat(:assign)
+    right = expr
+    Assign.new(left, token, right)
+  end
+
+  # variable: ID
+  def variable
+    node = Var.new(@current_token)
+    eat(:id)
+    node
+  end
+
+  # empty production
+  def empty
+    NoOp.new
+  end
+
+  # factor : (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN | variable
   def factor
     token = @current_token
     if token.type == :plus
@@ -80,6 +181,8 @@ class Parser
       node = expr
       eat :rparen
       node
+    else
+      variable
     end
   end
   

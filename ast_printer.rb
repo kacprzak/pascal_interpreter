@@ -35,6 +35,37 @@ class ASTPrinter < NodeVisitor
     @indent[-1,1] = SPACE if @indent[-1,1] == UP_AND_RIGHT
   end
 
+  def visit_Compound(node)
+    puts_node ";"
+    node.children.each_with_index do |x,i|
+      if i == node.children.size - 1
+        increase_indent UP_AND_RIGHT
+      else
+        increase_indent VERTICAL_AND_RIGHT
+      end
+      visit(x)
+      decrease_indent
+    end
+  end
+
+  def visit_NoOp(node)
+    puts_node ""
+  end
+
+  def visit_Assign(node)
+    puts_node node.op.value
+    increase_indent VERTICAL_AND_RIGHT
+    visit(node.left)
+    decrease_indent
+    increase_indent UP_AND_RIGHT
+    visit(node.right)
+    decrease_indent    
+  end
+
+  def visit_Var(node)
+    puts_node node.value
+  end
+  
   def visit_BinOp(node)
     puts_node node.op.value
     increase_indent VERTICAL_AND_RIGHT
@@ -57,5 +88,6 @@ class ASTPrinter < NodeVisitor
   end
 end
 
-ASTPrinter.new(Parser.new(Lexer.new(ARGV[0]))).print
+text = File.read(ARGV[0])
+ASTPrinter.new(Parser.new(Lexer.new(text))).print
 
