@@ -3,15 +3,36 @@ require_relative 'parser'
 require_relative 'node_visitor'
 
 class Interpreter < NodeVisitor
+  attr_accessor :global_scope
+  
   def initialize(parser)
     @parser = parser
+    @global_scope = {}
   end
 
   def interpret
     visit(@parser.parse)
+    nil
   end
 
   private
+  def visit_Compound(node)
+    node.children.each do |x|
+      visit(x)
+    end
+  end
+
+  def visit_NoOp(node)
+  end
+
+  def visit_Assign(node)
+    @global_scope[node.left.value] = visit(node.right)
+  end
+
+  def visit_Var(node)
+    @global_scope[node.value]
+  end
+  
   def visit_BinOp(node)
     left_value = visit(node.left)
     right_value = visit(node.right)
@@ -34,15 +55,25 @@ end
 
 
 def interactive_interpreter
+  scope = {}
   loop do
-    print 'calc> '
+    print 'pas> '
     $stdout.flush
     text = gets.chomp
+    
     next if text.empty?
+    break if text == 'q'
+    if text[-1] != '.'
+      text = "BEGIN #{text} END."
+    end
+    
     lexer = Lexer.new(text)
     parser = Parser.new(lexer)
     interpreter = Interpreter.new(parser)
-    puts interpreter.interpret
+    interpreter.global_scope = scope
+    interpreter.interpret
+    scope = interpreter.global_scope
+    puts scope
   end  
 end
 
@@ -50,7 +81,10 @@ def main
   if ARGV.length == 0
     interactive_interpreter
   else
-    puts Interpreter.new(Parser.new(Lexer.new(ARGV[0]))).interpret
+    text = File.read(ARGV[0])
+    interpreter = Interpreter.new(Parser.new(Lexer.new(text)))
+    interpreter.interpret
+    puts interpreter.global_scope
   end  
 end
 
