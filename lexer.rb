@@ -65,7 +65,7 @@ class Lexer
       result << @current_char
       advance
     end
-    RESERVED_KEYWORDS.fetch(result, Token.new(:id, result))
+    RESERVED_KEYWORDS.fetch(result.upcase, Token.new(:id, result))
   end
 
   public
