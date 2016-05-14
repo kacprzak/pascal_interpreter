@@ -26,11 +26,11 @@ class Interpreter < NodeVisitor
   end
 
   def visit_Assign(node)
-    @global_scope[node.left.value] = visit(node.right)
+    @global_scope[node.left.value.downcase] = visit(node.right)
   end
 
   def visit_Var(node)
-    @global_scope[node.value]
+    @global_scope[node.value.downcase]
   end
   
   def visit_BinOp(node)
