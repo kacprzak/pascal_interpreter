@@ -123,7 +123,6 @@ class Parser
   # statement_list: statement | statement SEMI statement_list
   def statement_list
     results = [statement]
-    results
     while @current_token.type == :semi
       eat(:semi)
       results << statement

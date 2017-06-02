@@ -13,7 +13,12 @@ end
 
 
 class Lexer
-  RESERVED_KEYWORDS = {'BEGIN' => Token.new(:begin, 'BEGIN'),
+  RESERVED_KEYWORDS = {'PROGRAM' => Token.new(:program, 'PROGRAM'),
+                       'VAR' => Token.new(:var, 'VAR'),
+                       'DIV' => Token.new(:div, 'DIV'),
+                       'INTEGER' => Token.new(:integer, 'INTEGER'),
+                       'REAL' => Token.new(:real, 'REAL'),
+                       'BEGIN' => Token.new(:begin, 'BEGIN'),
                        'END' => Token.new(:end, 'END') }
 
   def initialize(text)
@@ -49,14 +54,30 @@ class Lexer
     advance while @current_char and @current_char =~ /\s/
   end
 
-  # Consume integer
-  def integer
+  def skip_comment
+    advance while @current_char != '}'
+    advance # the closing curly bracket
+  end
+
+  # Return a (multidigit) integer or float consumed from the input.
+  def number
     result = ''
     while @current_char and @current_char =~ /[[:digit:]]/
       result << @current_char
       advance
     end
-    result.to_i
+
+    if @current_char == '.'
+      result << @current_char
+      advance
+      while @current_char and @current_char =~ /[[:digit:]]/
+        result << @current_char
+        advance
+      end
+      Token.new(:real_const, result.to_f)
+    else
+      Token.new(:integer_const, result.to_i)
+    end
   end
 
   def id
@@ -75,15 +96,21 @@ class Lexer
       when /\s/
         skip_whitespace
         next
+      when /{/
+        skip_comment
+        next
       when /_|[[:alpha:]]/
         return id
       when /[[:digit:]]/
-        return Token.new(:integer, integer)
+        return number
       when ':'
         if peek == '='
           advance
           advance
           return Token.new(:assign, ':=')
+        else
+          advance
+          return Token.new(:colon, ':')
         end
       when ';'
         advance
@@ -91,6 +118,9 @@ class Lexer
       when '.'
         advance
         return Token.new(:dot, '.')
+      when ','
+        advance
+        return Token.new(:comma, ',')
       when '+'
         advance
         return Token.new(:plus, '+')
@@ -102,7 +132,7 @@ class Lexer
         return Token.new(:mul, '*')
       when '/'
         advance
-        return Token.new(:div, '/')
+        return Token.new(:float_div, '/')
       when '('
         advance
         return Token.new(:lparen, '(')
