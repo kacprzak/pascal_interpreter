@@ -3,6 +3,49 @@ require_relative 'lexer'
 class AST
 end
 
+# Root node
+class Program < AST
+  attr_reader :name, :block
+
+  def initialize(name, block)
+    @name = name
+    @block = block
+  end
+end
+
+# Declarations and compound statements
+class Block < AST
+  attr_reader :declarations, :compound_statement
+
+  def initialize(declarations, compound_statement)
+    @declarations = declarations
+    @compound_statement = compound_statement
+  end
+end
+
+# Variable declaration
+class VarDecl < AST
+  attr_reader :var_node, :type_node
+
+  def initialize(var_node, type_node)
+    @var_node = var_node
+    @type_node = type_node
+  end
+end
+
+
+class Type < AST
+  attr_reader :token
+
+  def initialize(token)
+    @token = token
+  end
+
+  def value
+    @token.value
+  end
+end
+
 
 class BinOp < AST
   attr_reader :left, :token, :right
@@ -103,18 +146,65 @@ class Parser
     end
   end
 
-  # program: compound_statement DOT
+  # program: PROGRAM variable SEMI block DOT
   def program
-    node = compound_statement
-    eat(:dot)
+    eat :program
+    prog_name = variable.value
+    eat :semi
+    node = Program.new(prog_name, block)
+    eat :dot
+    node
+  end
+
+  # block: declarations compound_statement
+  def block
+    Block.new(declarations, compound_statement)
+  end
+
+  # declarations: VAR (variable_declaration SEMI)+ | empty
+  def declarations
+    declarations = []
+    if @current_token.type == :var
+      eat :var
+      while @current_token.type == :id
+        declarations << variable_declaration
+        eat :semi
+      end
+    end
+    declarations.flatten
+  end
+
+  # variable declaration: ID (COMMA ID)* COLON type_spec
+  def variable_declaration
+    var_nodes = [Var.new(@current_token)]
+    eat :id
+    while @current_token.type == :comma
+      eat :comma
+      var_nodes << Var.new(@current_token)
+      eat :id
+    end
+
+    eat :colon
+    type_node = type_spec
+    var_nodes.map { |v| VarDecl.new(v, type_node) }
+  end
+
+  # type_spec: INTEGER | REAL
+  def type_spec
+    node = Type.new(@current_token)
+    if @current_token.type == :integer
+      eat :integer
+    else
+      eat :real
+    end
     node
   end
 
   # compound_statement: BEGIN statement_list END
   def compound_statement
-    eat(:begin)
+    eat :begin
     nodes = statement_list
-    eat(:end)
+    eat :end
     root = Compound.new
     root.children = nodes
     root
@@ -124,7 +214,7 @@ class Parser
   def statement_list
     results = [statement]
     while @current_token.type == :semi
-      eat(:semi)
+      eat :semi
       results << statement
     end
     error if @current_token.type == :id
@@ -146,7 +236,7 @@ class Parser
   def assignment_statement
     left = variable
     token = @current_token
-    eat(:assign)
+    eat :assign
     right = expr
     Assign.new(left, token, right)
   end
@@ -154,7 +244,7 @@ class Parser
   # variable: ID
   def variable
     node = Var.new(@current_token)
-    eat(:id)
+    eat :id
     node
   end
 
@@ -163,7 +253,7 @@ class Parser
     NoOp.new
   end
 
-  # factor : (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN | variable
+  # factor : (PLUS | MINUS) factor | INTEGER_CONST | REAL_CONST | LPAREN expr RPAREN | variable
   def factor
     token = @current_token
     if token.type == :plus
@@ -172,8 +262,11 @@ class Parser
     elsif token.type == :minus
       eat :minus
       UnaryOp.new(token, factor)
-    elsif token.type == :integer
-      eat :integer
+    elsif token.type == :integer_const
+      eat :integer_const
+      Num.new(token)
+    elsif token.type == :real_const
+      eat :real_const
       Num.new(token)
     elsif token.type == :lparen
       eat :lparen
@@ -185,15 +278,17 @@ class Parser
     end
   end
   
-  # term: factor ((MUL | DIV) factor)*
+  # term: factor ((MUL | INTEGER_DIV | FLOAT_DIV) factor)*
   def term
     node = factor
-    while [:mul, :div].include? @current_token.type
+    while [:mul, :integer_div, :float_div].include? @current_token.type
       token = @current_token
       if token.type == :mul
         eat :mul
-      elsif token.type == :div
-        eat :div
+      elsif token.type == :integer_div
+        eat :integer_div
+      elsif token.type == :float_div
+        eat :float_div
       end
       node = BinOp.new(node, token, factor)
     end

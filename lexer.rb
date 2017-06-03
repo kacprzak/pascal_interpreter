@@ -15,7 +15,7 @@ end
 class Lexer
   RESERVED_KEYWORDS = {'PROGRAM' => Token.new(:program, 'PROGRAM'),
                        'VAR' => Token.new(:var, 'VAR'),
-                       'DIV' => Token.new(:div, 'DIV'),
+                       'DIV' => Token.new(:integer_div, 'DIV'),
                        'INTEGER' => Token.new(:integer, 'INTEGER'),
                        'REAL' => Token.new(:real, 'REAL'),
                        'BEGIN' => Token.new(:begin, 'BEGIN'),
