@@ -38,7 +38,7 @@ class ASTPrinter < NodeVisitor
   def visit_Program(node)
     puts_node node.name
     increase_indent UP_AND_RIGHT
-    visit node.block
+    visit(node.block)
     decrease_indent
   end
 
@@ -50,17 +50,17 @@ class ASTPrinter < NodeVisitor
       decrease_indent
     end
     increase_indent UP_AND_RIGHT
-    visit node.compound_statement
+    visit(node.compound_statement)
     decrease_indent
   end
 
   def visit_VarDecl(node)
     puts_node ":"
     increase_indent VERTICAL_AND_RIGHT
-    visit node.var_node
+    visit(node.var_node)
     decrease_indent
     increase_indent UP_AND_RIGHT
-    visit node.type_node
+    visit(node.type_node)
     decrease_indent
   end
 

@@ -16,6 +16,22 @@ class Interpreter < NodeVisitor
   end
 
   private
+
+  def visit_Program(node)
+    visit(node.block)
+  end
+
+  def visit_Block(node)
+    node.declarations.each { |x| visit x }
+    visit(node.compound_statement)
+  end
+
+  def visit_VarDecl(node)
+  end
+
+  def visit_Type(node)
+  end
+  
   def visit_Compound(node)
     node.children.each do |x|
       visit(x)
@@ -36,7 +52,13 @@ class Interpreter < NodeVisitor
   def visit_BinOp(node)
     left_value = visit(node.left)
     right_value = visit(node.right)
-    left_value.public_send(node.op.value, right_value)
+    if node.op.type == :integer_div
+      left_value / right_value
+    elsif node.op.type == :float_div
+      left_value.to_f / right_value.to_f
+    else
+      left_value.public_send(node.op.value, right_value)
+    end
   end
 
   def visit_UnaryOp(node)
