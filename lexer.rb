@@ -96,7 +96,7 @@ class Lexer
       when /\s/
         skip_whitespace
         next
-      when /{/
+      when '{'
         skip_comment
         next
       when /_|[[:alpha:]]/
